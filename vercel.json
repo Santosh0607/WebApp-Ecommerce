@@ -5,6 +5,6 @@
       "maxDuration": 30
     }
   },
-  "installCommand": "npm install && npx prisma generate",
+  "installCommand": "npm ci && npx prisma generate",
   "buildCommand": "npx prisma generate && npm run build"
 } 
