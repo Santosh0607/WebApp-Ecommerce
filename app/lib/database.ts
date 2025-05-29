@@ -2,8 +2,8 @@ import { PrismaClient } from '../generated/prisma';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mdfjxlmeazimoamfhuhf.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZmp4bG1lYXppbW9hbWZodWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1MDUyMjMsImV4cCI6MjA2NDA4MTIyM30.gyc_-Z1--U6rFdNzOInIFe-_KZf_tTnk8JeZiBoTzN8';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
