@@ -5,6 +5,7 @@ import { Inter, Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -98,6 +99,7 @@ export default function RootLayout({
                 },
               }}
             />
+            <Analytics />
           </CartProvider>
         </AuthProvider>
       </body>
