@@ -10,7 +10,8 @@
     "lint": "next lint",
     "server": "node server/index.js",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
