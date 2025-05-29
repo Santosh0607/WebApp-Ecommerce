@@ -4,7 +4,7 @@ A comprehensive e-commerce platform for custom T-shirt design, built with Next.j
 
 ## 🌟 Live Demo
 
-[View Live Demo](https://your-deployment-url.vercel.app) - *Coming Soon*
+🔥 **[View Live Demo](https://your-deployment-url.vercel.app)** - *Coming Soon*
 
 ## 🌟 Features
 
