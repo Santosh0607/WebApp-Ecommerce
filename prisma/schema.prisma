@@ -1,0 +1,381 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  avatar    String?
+  role      Role     @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLogin DateTime?
+
+  // Relations
+  orders    Order[]
+  designs   Design[]
+  cartItems CartItem[]
+  reviews   Review[]
+  analytics Analytics[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+// Product Management
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  image       String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  originalPrice Float?
+  stock       Int         @default(0)
+  sku         String      @unique
+  active      Boolean     @default(true)
+  featured    Boolean     @default(false)
+  tags        String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]
+  variants    ProductVariant[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  reviews     Review[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  color     String
+  size      String
+  type      String   // round-neck, v-neck, polo, etc.
+  price     Float?   // Optional price override
+  stock     Int      @default(0)
+  sku       String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tshirtImages TshirtImage[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@map("product_variants")
+}
+
+// T-Shirt Image Management
+model TshirtImage {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  color     String
+  type      String   // round-neck, v-neck, polo, etc.
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("tshirt_images")
+}
+
+// Design Management
+model Design {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String
+  isPublic    Boolean     @default(false)
+  isTemplate  Boolean     @default(false)
+  likes       Int         @default(0)
+  views       Int         @default(0)
+  tags        String[]
+  designData  Json        // Fabric.js canvas data
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("designs")
+}
+
+// Shopping Cart
+model CartItem {
+  id         String   @id @default(cuid())
+  quantity   Int      @default(1)
+  customData Json?    // Custom design data
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  productId  String
+  product    Product        @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([userId, productId, variantId])
+  @@map("cart_items")
+}
+
+// Order Management
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING)
+  totalAmount   Float
+  shippingCost  Float       @default(0)
+  gstAmount     Float       @default(0)
+  discountAmount Float      @default(0)
+  paymentMethod String?
+  paymentStatus PaymentStatus @default(PENDING)
+  
+  // Shipping Information
+  shippingAddress Json
+  billingAddress  Json?
+  trackingNumber  String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  orderItems    OrderItem[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  customData  Json?    // Custom design data
+  createdAt   DateTime @default(now())
+
+  // Relations
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id])
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  designId    String?
+  design      Design?        @relation(fields: [designId], references: [id])
+
+  @@map("order_items")
+}
+
+// Reviews and Ratings
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  comment   String?
+  images    String[] // Review images
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+// Website Content Management
+model SiteSettings {
+  id          String   @id @default(cuid())
+  siteName    String   @default("SS Garment")
+  tagline     String   @default("Create Unique T-Shirts Your Way")
+  description String?
+  logo        String?
+  favicon     String?
+  
+  // Contact Information
+  address     String   @default("Pokhara Bastolathar, Nepal")
+  phone       String   @default("+977 999999999")
+  email       String   @default("ssgarment@gmail.com")
+  
+  // Social Media
+  facebook    String?
+  instagram   String?
+  twitter     String?
+  
+  // SEO Settings
+  metaTitle   String?
+  metaDescription String?
+  metaKeywords String[]
+  
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model HeroContent {
+  id          String   @id @default(cuid())
+  heading     String   @default("Create Unique T-Shirts Your Way")
+  subheading  String   @default("Express yourself with custom designs")
+  description String   @default("Upload your logo, remove backgrounds with AI, and create stunning t-shirts in minutes. Simple, fast, and beautiful.")
+  
+  // Statistics
+  customerCount String @default("15,000+")
+  orderCount    String @default("25,000+")
+  satisfaction  String @default("4.9★")
+  
+  // Call to Action
+  ctaText     String   @default("Start Designing")
+  ctaLink     String   @default("/design")
+  
+  active      Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@map("hero_content")
+}
+
+model AboutContent {
+  id        String   @id @default(cuid())
+  title     String   @default("About SS Garment")
+  content   String   @default("SS Garment was founded with a vision to revolutionize custom T-shirt design in Nepal...")
+  mission   String?
+  vision    String?
+  values    String[]
+  
+  // Founder Information
+  founderName     String?
+  founderTitle    String?
+  founderMessage  String?
+  founderImage    String?
+  
+  // CEO Information
+  ceoName         String?
+  ceoTitle        String?
+  ceoMessage      String?
+  ceoImage        String?
+  
+  // Company Information
+  foundedYear     Int?
+  teamSize        Int?
+  teamDescription String?
+  historyText     String?
+  achievementsText String?
+  
+  // Legacy field for backward compatibility
+  teamInfo  Json?
+  updatedAt DateTime @updatedAt
+
+  @@map("about_content")
+}
+
+// Analytics and Tracking
+model Analytics {
+  id          String   @id @default(cuid())
+  event       String   // page_view, design_created, order_placed, etc.
+  data        Json     // Event specific data
+  userAgent   String?
+  ipAddress   String?
+  referrer    String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("analytics")
+}

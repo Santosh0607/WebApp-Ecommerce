@@ -1,0 +1,10 @@
+{
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "installCommand": "npm ci && npx prisma generate",
+  "buildCommand": "npx prisma generate && npm run build"
+} 
